@@ -1,4 +1,5 @@
 
+use log;
 use futures::stream::StreamExt;
 use std::{env, io, str};
 use tokio_util::codec::{Decoder, Encoder};
@@ -38,8 +39,16 @@ impl Encoder<String> for LineCodec {
 
 #[tokio::main]
 async fn main() -> tokio_serial::Result<()> {
+
+    // Se activa el log
+    env_logger::init();
+    log::info!("Iniciando!");
+    log::error!("Esto es un error...");
+
+
     let mut args = env::args();
     let tty_path = args.nth(1).unwrap_or_else(|| DEFAULT_TTY.into());
+
 
     let mut port = tokio_serial::new(tty_path, 115200).open_native_async()?;
 
