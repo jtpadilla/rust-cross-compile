@@ -1,0 +1,37 @@
+###########################################################
+# Instalacion
+###########################################################
+
+# Crosscompile Rust Executables for Beaglebone Black
+# This tutorial shows, how to crosscompile staticaly linked executables 
+# for the Beaglebone Black (ARM Architecture). 
+# Following these instructions helped getting rid of a message on the BBB 
+# like "libc.so.6 version GLIBC_2.32 not found"
+
+### Install linker
+sudo apt install gcc-arm-linux-gnueabihf
+
+### Add crate to Rust
+rustup target add armv7-unknown-linux-musleabihf
+
+### Create Cargo package
+cargo new --bin arm_cross_compile && cd arm_cross_compile
+
+### Point Cargo to the right linker
+export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER=arm-linux-gnueabihf-gcc
+
+### If C dependencies are involved
+export CC_armv7_unknown_linux_musleabihf=arm-linux-gnueabihf-gcc
+
+### Build
+cargo build --target armv7-unknown-linux-musleabihf
+
+The executable is located in `target/armv7-unknown-linux-musleabihf/debug`
+
+
+
+#######################################################yy####
+# Enlaces de interes
+#######################################################yy####
+
+https://john-millikin.com/notes-on-cross-compiling-rust
