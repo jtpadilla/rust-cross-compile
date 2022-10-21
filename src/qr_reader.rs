@@ -1,15 +1,13 @@
 
-use log::{info};
-use futures::stream::StreamExt;
 use std::{env, io, str};
 use tokio_util::codec::{Decoder, Encoder};
 
 use bytes::BytesMut;
-use tokio_serial::{self, SerialPortBuilderExt};
+use tokio_serial::{self, SerialStream, SerialPortBuilderExt, Error};
 
 const DEFAULT_TTY: &str = "/dev/ttyACM0";
 
-struct LineCodec;
+pub struct LineCodec;
 
 impl Decoder for LineCodec {
 
@@ -27,6 +25,7 @@ impl Decoder for LineCodec {
         }
         Ok(None)
     }
+
 }
 
 impl Encoder<String> for LineCodec {
@@ -37,22 +36,17 @@ impl Encoder<String> for LineCodec {
     }
 }
 
-#[tokio::main]
-async fn main() -> tokio_serial::Result<()> {
-
-    // Se activa el log
-    env_logger::init();
-
-    // Se obtiene el nombre del device (puerto serie) que se utilizara
+pub fn get_tty_path() -> String {
     let mut args = env::args();
-    let tty_path = args.nth(1).unwrap_or_else(|| DEFAULT_TTY.into());
-    info!("Se utilizara el puerto {}", tty_path);
-    
+    args.nth(1).unwrap_or_else(|| DEFAULT_TTY.into())
+}
+
+pub fn get_serial_stream(tty_path: &str) -> Result<SerialStream, Error> {
+
     // Se construye un builder donde se nos requiere ademas la velocidad
     let builder = tokio_serial::new(tty_path, 115200);
 
-    // Mediante el builder del serie se termina de configurar y
-    // finalmente se crea el stream
+    // Con el builder se termina de configurar y se crea el stream
     let mut serial_stream = builder.baud_rate(115200)
         .stop_bits(tokio_serial::StopBits::One)
         .data_bits(tokio_serial::DataBits::Eight)
@@ -60,20 +54,12 @@ async fn main() -> tokio_serial::Result<()> {
         .flow_control(tokio_serial::FlowControl::None)
         .open_native_async()?;
 
-    // Se configura el stream para acceder de forma exclusiva
+    // Se stream se configura para su uso exclusivo
     serial_stream.set_exclusive(false)
         .expect("Unable to set serial port exclusive to false");
 
-    // Se crea un Reader que asincronamente recibira lso eventos del puerto serie
-    let mut reader = LineCodec.framed(serial_stream);
-
-    // Bucle infinito para leer los datod que asincroonamente llegan por el reader
-    info!("Esperando datos del puerto serie...");
-    while let Some(line_result) = reader.next().await {
-        let line = line_result.expect("Failed to read line");
-        println!("{}", line);
-    }
-
-    Ok(())
+    // Resultado
+    Ok(serial_stream)
 
 }
+
