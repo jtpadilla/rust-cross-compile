@@ -63,3 +63,16 @@ pub fn get_serial_stream(tty_path: &str) -> Result<SerialStream, Error> {
 
 }
 
+pub fn popo() {
+
+    let serialStream = get_serial_stream("");
+
+    let l = LineCodec{};
+
+    l.framed(serialStream);
+
+
+    let mut reader = LineCodec.framed(serial_stream);
+
+}
+
