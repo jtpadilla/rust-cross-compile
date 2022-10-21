@@ -1,12 +1,24 @@
 use log::debug;
 
 use std::{env, io, str};
-use tokio_util::codec::{Decoder, Encoder, Framed};
-
 use bytes::BytesMut;
+use futures_util::stream::StreamExt;
+use tokio_util::codec::{Decoder, Encoder, Framed};
 use tokio_serial::{self, SerialStream, SerialPortBuilderExt, Error};
 
 const DEFAULT_TTY: &str = "/dev/ttyACM0";
+
+pub struct QrReader {
+    reader: Framed<SerialStream, LineCodec>  
+}
+
+impl QrReader {
+    /* 
+    pub async fn readLine(self) -> Option<Result<String, std::io::Error>> {
+        self.reader.next().await
+    }
+    */
+}
 
 pub struct LineCodec;
 
