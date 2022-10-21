@@ -1,21 +1,16 @@
-use log::info;
+use log::debug;
 use arm_cross_compile::qr_reader;
-
+use futures_util::stream::StreamExt;
 
 #[tokio::main]
 async fn main() -> tokio_serial::Result<()> {
 
     env_logger::init();
 
-    let tty_path = qr_reader::get_tty_path();
-    let serial_stream = qr_reader::get_serial_stream(&tty_path)?;
+    let mut reader = qr_reader::create_reader()?;
 
-    // Se crea un Reader que asincronamente recibira lso eventos del puerto serie
-    let mut reader = qr_reader::LineCodec.framed(serial_stream);
+    debug!("Esperando datos del puerto serie...");
 
-    // Bucle infinito para leer los datod que asincroonamente llegan por el reader
-    info!("Se utilizara el puerto {}", tty_path);
-    info!("Esperando datos del puerto serie...");
     while let Some(line_result) = reader.next().await {
         let line = line_result.expect("Failed to read line");
         println!("{}", line);

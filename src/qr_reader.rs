@@ -1,6 +1,7 @@
+use log::debug;
 
 use std::{env, io, str};
-use tokio_util::codec::{Decoder, Encoder};
+use tokio_util::codec::{Decoder, Encoder, Framed};
 
 use bytes::BytesMut;
 use tokio_serial::{self, SerialStream, SerialPortBuilderExt, Error};
@@ -46,7 +47,7 @@ pub fn get_serial_stream(tty_path: &str) -> Result<SerialStream, Error> {
     // Se construye un builder donde se nos requiere ademas la velocidad
     let builder = tokio_serial::new(tty_path, 115200);
 
-    // Con el builder se termina de configurar y se crea el stream
+    // Se termina de configurar y se crea el SerialStream
     let mut serial_stream = builder.baud_rate(115200)
         .stop_bits(tokio_serial::StopBits::One)
         .data_bits(tokio_serial::DataBits::Eight)
@@ -54,7 +55,7 @@ pub fn get_serial_stream(tty_path: &str) -> Result<SerialStream, Error> {
         .flow_control(tokio_serial::FlowControl::None)
         .open_native_async()?;
 
-    // Se stream se configura para su uso exclusivo
+    // Se SerialStream se configura para su uso exclusivo
     serial_stream.set_exclusive(false)
         .expect("Unable to set serial port exclusive to false");
 
@@ -63,16 +64,17 @@ pub fn get_serial_stream(tty_path: &str) -> Result<SerialStream, Error> {
 
 }
 
-pub fn popo() {
 
-    let serialStream = get_serial_stream("");
+pub fn create_reader() -> Result<Framed<SerialStream, LineCodec>, Error> {
 
-    let l = LineCodec{};
+    let tty_path = get_tty_path();
+    debug!("Se utilizara el puerto {}", tty_path);
 
-    l.framed(serialStream);
+    let serial_stream = get_serial_stream(&tty_path)?;
 
+    let reader = LineCodec.framed(serial_stream);
 
-    let mut reader = LineCodec.framed(serial_stream);
+    Ok(reader)
 
 }
 
