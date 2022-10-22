@@ -1,8 +1,8 @@
+use futures::StreamExt;
 use log::debug;
 
 use std::{env, io, str};
 use bytes::BytesMut;
-use futures_util::stream::StreamExt;
 use tokio_util::codec::{Decoder, Encoder, Framed};
 use tokio_serial::{self, SerialStream, SerialPortBuilderExt, Error};
 
@@ -13,11 +13,29 @@ pub struct QrReader {
 }
 
 impl QrReader {
-    /* 
-    pub async fn readLine(self) -> Option<Result<String, std::io::Error>> {
-        self.reader.next().await
+
+    pub fn new() -> Result<QrReader, Error> {
+
+        let tty_path = get_tty_path();
+
+        debug!("Se utilizara el puerto {}", tty_path);
+    
+        let serial_stream = get_serial_stream(&tty_path)?;
+    
+        let framed = LineCodec.framed(serial_stream);
+    
+        let r = QrReader {
+            reader: framed
+        };
+        
+        Ok(r)
     }
-    */
+
+    pub async fn read_line(&mut self) -> Option<Result<String, io::Error>> {
+        let r: Option<Result<String, io::Error>> = self.reader.next().await;
+        r
+    }
+
 }
 
 pub struct LineCodec;
@@ -76,17 +94,4 @@ pub fn get_serial_stream(tty_path: &str) -> Result<SerialStream, Error> {
 
 }
 
-
-pub fn create_reader() -> Result<Framed<SerialStream, LineCodec>, Error> {
-
-    let tty_path = get_tty_path();
-    debug!("Se utilizara el puerto {}", tty_path);
-
-    let serial_stream = get_serial_stream(&tty_path)?;
-
-    let reader = LineCodec.framed(serial_stream);
-
-    Ok(reader)
-
-}
 
